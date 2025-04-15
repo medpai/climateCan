@@ -6,21 +6,136 @@ import LineChart from './components/charts/LineChart';
 import BarChart from './components/charts/BarChart';
 import Link from 'next/link';
 import Image from 'next/image';
+import apiClient from './lib/apiClient';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [temperatureData, setTemperatureData] = useState(null);
+  const [pollutionData, setPollutionData] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Vérifier la connexion à la base de données
+        const connectionStatus = await apiClient.testDatabaseConnection();
+        console.log('État de connexion à la base de données:', connectionStatus);
+        
+        // Si c'est la première fois, initialiser la base de données avec des données
+        try {
+          const seedResult = await apiClient.seedDatabase();
+          console.log('Résultat de l\'initialisation de la base de données:', seedResult);
+        } catch (seedError) {
+          console.warn('Note: La base de données pourrait déjà être initialisée', seedError);
+        }
+        
+        // Récupérer les données de température pour l'Ontario, Québec et Colombie-Britannique
+        const tempResult = await apiClient.getTemperatures({ year: '2023' });
+        
+        if (tempResult.success && tempResult.data) {
+          // Filtrer les données pour les provinces spécifiques
+          const ontarioData = tempResult.data.find(p => p.province_code === 'ON');
+          const quebecData = tempResult.data.find(p => p.province_code === 'QC');
+          const bcData = tempResult.data.find(p => p.province_code === 'BC');
+          
+          // Transformer les données pour le format du graphique
+          const formattedTempData = {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+            datasets: []
+          };
+          
+          if (ontarioData) {
+            formattedTempData.datasets.push({
+              label: 'Ontario (2023)',
+              data: [
+                ontarioData.january, ontarioData.february, ontarioData.march, 
+                ontarioData.april, ontarioData.may, ontarioData.june,
+                ontarioData.july, ontarioData.august, ontarioData.september,
+                ontarioData.october, ontarioData.november, ontarioData.december
+              ],
+              borderColor: 'rgb(255, 99, 132)',
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              tension: 0.3,
+              fill: true
+            });
+          }
+          
+          if (quebecData) {
+            formattedTempData.datasets.push({
+              label: 'Québec (2023)',
+              data: [
+                quebecData.january, quebecData.february, quebecData.march, 
+                quebecData.april, quebecData.may, quebecData.june,
+                quebecData.july, quebecData.august, quebecData.september,
+                quebecData.october, quebecData.november, quebecData.december
+              ],
+              borderColor: 'rgb(54, 162, 235)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              tension: 0.3,
+              fill: true
+            });
+          }
+          
+          if (bcData) {
+            formattedTempData.datasets.push({
+              label: 'Colombie-Britannique (2023)',
+              data: [
+                bcData.january, bcData.february, bcData.march, 
+                bcData.april, bcData.may, bcData.june,
+                bcData.july, bcData.august, bcData.september,
+                bcData.october, bcData.november, bcData.december
+              ],
+              borderColor: 'rgb(75, 192, 192)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              tension: 0.3,
+              fill: true
+            });
+          }
+          
+          setTemperatureData(formattedTempData);
+        }
+        
+        // Récupérer les données de pollution pour toutes les provinces
+        const pollResult = await apiClient.getPollution({ year: '2023' });
+        
+        if (pollResult.success && pollResult.data) {
+          // Transformer les données pour le format du graphique
+          const formattedPollData = {
+            labels: pollResult.data.map(p => p.province_code),
+            datasets: [{
+              label: 'Émissions de CO2 moyennes (Mt) - 2023',
+              // Calculer la moyenne de pollution par province (moyenne des mois)
+              data: pollResult.data.map(p => {
+                const monthlyValues = [
+                  p.january, p.february, p.march, p.april, p.may, p.june,
+                  p.july, p.august, p.september, p.october, p.november, p.december
+                ];
+                const sum = monthlyValues.reduce((acc, val) => acc + val, 0);
+                return (sum / 12).toFixed(1);
+              }),
+              backgroundColor: 'rgba(153, 102, 255, 0.5)',
+              borderColor: 'rgb(153, 102, 255)',
+              borderWidth: 1
+            }]
+          };
+          
+          setPollutionData(formattedPollData);
+        }
+      } catch (err) {
+        console.error('Erreur lors de la récupération des données:', err);
+        setError('Impossible de charger les données. Veuillez réessayer plus tard.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    fetchData();
   }, []);
 
-  // Sample temperature data for homepage chart
-  const temperatureData = {
+  // Utiliser des données de secours si l'API échoue
+  const fallbackTemperatureData = {
     labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
     datasets: [
       {
@@ -50,8 +165,7 @@ export default function Home() {
     ]
   };
 
-  // Sample pollution data for homepage chart
-  const pollutionData = {
+  const fallbackPollutionData = {
     labels: ['ON', 'QC', 'AB', 'BC', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU'],
     datasets: [
       {
@@ -85,6 +199,13 @@ export default function Home() {
           </div>
         </section>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Erreur! </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+
         {/* Main content */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Temperature chart */}
@@ -97,8 +218,8 @@ export default function Home() {
             ) : (
               <LineChart 
                 title="Températures moyennes par mois (2023)" 
-                datasets={temperatureData.datasets}
-                labels={temperatureData.labels}
+                datasets={temperatureData?.datasets || fallbackTemperatureData.datasets}
+                labels={temperatureData?.labels || fallbackTemperatureData.labels}
                 yAxisLabel="°C"
                 height={320}
               />
@@ -120,8 +241,8 @@ export default function Home() {
             ) : (
               <BarChart 
                 title="Émissions de CO2 par province (2023)" 
-                datasets={pollutionData.datasets}
-                labels={pollutionData.labels}
+                datasets={pollutionData?.datasets || fallbackPollutionData.datasets}
+                labels={pollutionData?.labels || fallbackPollutionData.labels}
                 yAxisLabel="Mt"
                 height={320}
               />

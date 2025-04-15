@@ -1,5 +1,5 @@
-import { DataTypes } from 'sequelize';
-import { sequelize } from '../database.js';
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database.js');
 
 // Precipitation model for 2021 (in mm)
 const Precipitation2021 = sequelize.define('Precipitation2021', {
@@ -226,4 +226,4 @@ const Precipitation2023 = sequelize.define('Precipitation2023', {
   timestamps: true
 });
 
-export { Precipitation2021, Precipitation2022, Precipitation2023 };
+module.exports = { Precipitation2021, Precipitation2022, Precipitation2023 };

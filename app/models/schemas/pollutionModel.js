@@ -1,5 +1,5 @@
-import { DataTypes } from 'sequelize';
-import { sequelize } from '../database.js';
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database.js');
 
 // Pollution model for 2021 (CO2 in megatonnes)
 const Pollution2021 = sequelize.define('Pollution2021', {
@@ -226,4 +226,4 @@ const Pollution2023 = sequelize.define('Pollution2023', {
   timestamps: true
 });
 
-export { Pollution2021, Pollution2022, Pollution2023 };
+module.exports = { Pollution2021, Pollution2022, Pollution2023 };

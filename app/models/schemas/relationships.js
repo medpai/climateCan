@@ -1,6 +1,6 @@
-import { Temperature2021, Temperature2022, Temperature2023, Temperature2024 } from './temperatureModel.js';
-import { Pollution2021, Pollution2022, Pollution2023 } from './pollutionModel.js';
-import { Precipitation2021, Precipitation2022, Precipitation2023 } from './precipitationModel.js';
+const { Temperature2021, Temperature2022, Temperature2023, Temperature2024 } = require('./temperatureModel.js');
+const { Pollution2021, Pollution2022, Pollution2023 } = require('./pollutionModel.js');
+const { Precipitation2021, Precipitation2022, Precipitation2023 } = require('./precipitationModel.js');
 
 // Define relationships between models
 const setupRelationships = () => {
@@ -60,4 +60,4 @@ const setupRelationships = () => {
   Precipitation2023.belongsTo(Pollution2023, { foreignKey: 'province_code', targetKey: 'province_code' });
 };
 
-export default setupRelationships;
+module.exports = setupRelationships;

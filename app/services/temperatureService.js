@@ -1,9 +1,3 @@
-import { 
-  Temperature2021, 
-  Temperature2022, 
-  Temperature2023, 
-  Temperature2024 
-} from '../models/schemas/index.js';
 import { sequelize } from '../models/database.js';
 import { QueryTypes } from 'sequelize';
 
@@ -11,27 +5,26 @@ class TemperatureService {
   // Get all temperature data for a specific year
   async getAllByYear(year) {
     try {
-      let model;
-      switch (year) {
-        case 2021:
-          model = Temperature2021;
-          break;
-        case 2022:
-          model = Temperature2022;
-          break;
-        case 2023:
-          model = Temperature2023;
-          break;
-        case 2024:
-          model = Temperature2024;
-          break;
-        default:
-          throw new Error(`Invalid year: ${year}`);
+      // Ensure year is treated as a number
+      const yearNum = parseInt(year, 10);
+      
+      // Validate year is within range
+      if (yearNum < 2021 || yearNum > 2024) {
+        throw new Error(`Invalid year: ${year}`);
       }
       
-      return await model.findAll({
-        order: [['province_code', 'ASC']]
+      // Use raw SQL query instead of the model
+      const query = `
+        SELECT *
+        FROM temperature_${yearNum}
+        ORDER BY province_code ASC
+      `;
+      
+      const results = await sequelize.query(query, { 
+        type: QueryTypes.SELECT 
       });
+      
+      return results;
     } catch (error) {
       console.error('Error fetching temperature data:', error);
       throw error;
@@ -41,27 +34,27 @@ class TemperatureService {
   // Get temperature data for a specific province and year
   async getByProvinceAndYear(provinceCode, year) {
     try {
-      let model;
-      switch (year) {
-        case 2021:
-          model = Temperature2021;
-          break;
-        case 2022:
-          model = Temperature2022;
-          break;
-        case 2023:
-          model = Temperature2023;
-          break;
-        case 2024:
-          model = Temperature2024;
-          break;
-        default:
-          throw new Error(`Invalid year: ${year}`);
+      // Ensure year is treated as a number
+      const yearNum = parseInt(year, 10);
+      
+      // Validate year is within range
+      if (yearNum < 2021 || yearNum > 2024) {
+        throw new Error(`Invalid year: ${year}`);
       }
       
-      return await model.findOne({
-        where: { province_code: provinceCode }
+      // Use raw SQL query instead of the model
+      const query = `
+        SELECT *
+        FROM temperature_${yearNum}
+        WHERE province_code = :provinceCode
+      `;
+      
+      const results = await sequelize.query(query, { 
+        type: QueryTypes.SELECT,
+        replacements: { provinceCode }
       });
+      
+      return results[0] || null;
     } catch (error) {
       console.error('Error fetching temperature data for province:', error);
       throw error;

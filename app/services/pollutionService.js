@@ -1,8 +1,3 @@
-import { 
-  Pollution2021, 
-  Pollution2022, 
-  Pollution2023 
-} from '../models/schemas/index.js';
 import { sequelize } from '../models/database.js';
 import { QueryTypes } from 'sequelize';
 
@@ -10,24 +5,26 @@ class PollutionService {
   // Get all pollution data for a specific year
   async getAllByYear(year) {
     try {
-      let model;
-      switch (year) {
-        case 2021:
-          model = Pollution2021;
-          break;
-        case 2022:
-          model = Pollution2022;
-          break;
-        case 2023:
-          model = Pollution2023;
-          break;
-        default:
-          throw new Error(`Invalid year: ${year}`);
+      // Ensure year is treated as a number
+      const yearNum = parseInt(year, 10);
+      
+      // Validate year is within range
+      if (yearNum < 2021 || yearNum > 2023) {
+        throw new Error(`Invalid year: ${year}`);
       }
       
-      return await model.findAll({
-        order: [['province_code', 'ASC']]
+      // Use raw SQL query instead of the model
+      const query = `
+        SELECT *
+        FROM pollution_${yearNum}
+        ORDER BY province_code ASC
+      `;
+      
+      const results = await sequelize.query(query, { 
+        type: QueryTypes.SELECT 
       });
+      
+      return results;
     } catch (error) {
       console.error('Error fetching pollution data:', error);
       throw error;
@@ -37,24 +34,27 @@ class PollutionService {
   // Get pollution data for a specific province and year
   async getByProvinceAndYear(provinceCode, year) {
     try {
-      let model;
-      switch (year) {
-        case 2021:
-          model = Pollution2021;
-          break;
-        case 2022:
-          model = Pollution2022;
-          break;
-        case 2023:
-          model = Pollution2023;
-          break;
-        default:
-          throw new Error(`Invalid year: ${year}`);
+      // Ensure year is treated as a number
+      const yearNum = parseInt(year, 10);
+      
+      // Validate year is within range
+      if (yearNum < 2021 || yearNum > 2023) {
+        throw new Error(`Invalid year: ${year}`);
       }
       
-      return await model.findOne({
-        where: { province_code: provinceCode }
+      // Use raw SQL query instead of the model
+      const query = `
+        SELECT *
+        FROM pollution_${yearNum}
+        WHERE province_code = :provinceCode
+      `;
+      
+      const results = await sequelize.query(query, { 
+        type: QueryTypes.SELECT,
+        replacements: { provinceCode }
       });
+      
+      return results[0] || null;
     } catch (error) {
       console.error('Error fetching pollution data for province:', error);
       throw error;
