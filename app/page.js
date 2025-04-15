@@ -7,14 +7,29 @@ import BarChart from './components/charts/BarChart';
 import Link from 'next/link';
 import Image from 'next/image';
 import apiClient from './lib/apiClient';
+import { temperatureData as staticTempData, pollutionData as staticPollData, isStaticMode } from './lib/staticData';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [temperatureData, setTemperatureData] = useState(null);
   const [pollutionData, setPollutionData] = useState(null);
   const [error, setError] = useState(null);
+  const [isStatic, setIsStatic] = useState(false);
 
   useEffect(() => {
+    // Vérifiez si nous sommes en mode statique (GitHub Pages)
+    const staticMode = isStaticMode();
+    setIsStatic(staticMode);
+    
+    // Si nous sommes en mode statique, utilisez immédiatement les données statiques
+    if (staticMode) {
+      setTemperatureData(staticTempData);
+      setPollutionData(staticPollData);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Sinon, procédez avec la récupération des données depuis l'API
     const fetchData = async () => {
       try {
         setIsLoading(true);

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Canada Weather | Redirection</title>
+  <script type="text/javascript">
+    // Script de redirection pour le routage client-side sur GitHub Pages
+    var pathSegmentsToKeep = 1; // Adaptez ce nombre en fonction de votre configuration (1 pour /climateCan)
+    var l = window.location;
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+      l.hash
+    );
+  </script>
+</head>
+<body>
+  <h1>Redirection en cours...</h1>
+  <p>Si vous n'êtes pas redirigé automatiquement, <a href="/climateCan">cliquez ici</a>.</p>
+</body>
+</html>
